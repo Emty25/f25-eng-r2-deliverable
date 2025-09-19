@@ -16,11 +16,32 @@ export default function SpeciesChatbot() {
     }
   };
 
-const handleSubmit = async () => {
-  // TODO: Implement this function
-}
+  const [isLoading, setIsLoading] = useState(false);
+  const handleSubmit = async () => {
+    const trimmed = message.trim();
+    if (trimmed === "" || isLoading) return;
+    setChatLog((prev) => [...prev, { role: "user", content: trimmed }]);
+    setMessage("");
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      });
 
-return (
+      if (!response.ok) throw new Error("Error contacting chatbot API");
+
+      const data = (await response.json()) as { response: string };
+      setChatLog((prev) => [...prev, { role: "bot", content: data.response }]);
+    } catch (error) {
+      setChatLog((prev) => [...prev, { role: "bot", content: "Sorry, something went wrong. Please try again." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
     <>
       <TypographyH2>Species Chatbot</TypographyH2>
       <div className="mt-4 flex gap-4">
